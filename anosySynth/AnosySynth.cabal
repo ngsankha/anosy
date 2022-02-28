@@ -1,0 +1,26 @@
+name:                AnosySynth
+version:             0.1.0.0
+license:             MIT
+license-file:        LICENSE
+author:              Sankha Narayan Guria
+maintainer:          sankha93@gmail.com
+build-type:          Simple
+cabal-version:       >=1.10
+
+library 
+  exposed-modules:     AnosySynth
+                       Language.Ghc.Misc
+                       Language.SMT.ToSMT
+                       Domains.Range
+                       Text.SExpression
+                       Text.SExpression.Default
+                       Text.SExpression.Internal
+                       Text.SExpression.Types
+                       Z3Interface
+                       LiquidGenerator
+                       Utils
+  ghc-options:         -Wall
+  hs-source-dirs:      src
+  build-depends:       base, ghc >= 8.4.4, ghc-boot, megaparsec, data-default, containers==0.6.2.1
+  build-depends:       unordered-containers, mtl, hashable, interpolate, process > 1.6
+  default-language:    Haskell2010
