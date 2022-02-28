@@ -37,5 +37,6 @@ query secret = let inSchool = ((schoolType secret) >= 4) in
     ulLat = 39003178
     lrLong = 76925926
     ulLong = 76958199
-{-# ANN module ("sound", "query") #-}
-{-# ANN module ("complete", "query") #-}
+
+{-# ANN module ("underapprox", "query") #-}
+{-# ANN module ("overapprox", "query") #-}

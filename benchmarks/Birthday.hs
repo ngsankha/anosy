@@ -23,5 +23,5 @@ query secret = ((bday secret) >= cday) && ((cday + 7) > (bday secret))
   where
     cday = 260
 
-{-# ANN module ("sound", "query") #-}
-{-# ANN module ("complete", "query") #-}
+{-# ANN module ("underapprox", "query") #-}
+{-# ANN module ("overapprox", "query") #-}

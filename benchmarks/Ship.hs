@@ -34,4 +34,5 @@ query secret = (capacity secret) > limit && (abs (x secret - 200) + abs (y secre
     limit = 50
     d = 100
 
-{-# ANN module ("sound", "query") #-}
+{-# ANN module ("underapprox", "query") #-}
+{-# ANN module ("overapprox", "query") #-}

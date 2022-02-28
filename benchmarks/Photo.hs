@@ -27,5 +27,5 @@ query secret = let ageSat = (age >= 24) && (age <= 27) in
   where
     age = 2010 - (birthYear secret)
 
-{-# ANN module ("sound", "query") #-}
-{-# ANN module ("complete", "query") #-}
+{-# ANN module ("underapprox", "query") #-}
+{-# ANN module ("overapprox", "query") #-}
