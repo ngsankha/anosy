@@ -7,17 +7,13 @@ import Data.String.Interpolate (i)
 import GhcPlugins
 import Language.Ghc.Misc ()
 import Language.SMT.ToSMT (toSMT, sepBy)
-import Data.Char (toLower)
 import Data.List (find)
 import Data.Word (Word8)
-import Text.Printf
-import Data.Foldable (for_)
-import Z3Interface
 import qualified Language.SMT.Constraints as Constraints
 import LiquidGenerator (liquidTheorem, liquidHeader, secretDefn)
-import Text.Megaparsec (errorBundlePretty, ParseErrorBundle)
-import Data.Void (Void)
-import Utils (first, second, annName, dataAnnot, modAnnot)
+import Utils (first, second, annName, dataAnnot, modAnnot, findNum)
+import Solver (smtModels)
+import Domains.PowerSet (IntRange(..), Range(..))
 
 plugin :: Plugin
 plugin = defaultPlugin {
@@ -27,45 +23,6 @@ plugin = defaultPlugin {
 install :: [CommandLineOption] -> [CoreToDo] -> CoreM [CoreToDo]
 install _ todo =
   return (CoreDoPluginPass "anosySynth" pass : todo)
-
-smtModels :: [TyCon] -> CoreProgram -> Annotation -> [(Unique, [[(String, (Int, Int))]])] -> [(String, (Int, Int))] -> (String, String, Int) -> IO ([(String, Integer)], [(String, Integer)])
-smtModels tycons hsBinds ann bounds dataFields modann = do
-  let secretType = toSMT tycons
-  let querySMT = toSMT hsBinds
-  let absSecretType = Constraints.absSMT ann (head bounds)
-  let betweeenQuery = Constraints.betweeenSMT ann (head bounds)
-  let boundsAssert = Constraints.searchBounds dataFields
-  let solverAssertTrue = Constraints.solverQuery ann modann dataFields True
-  let solverAssertFalse = Constraints.solverQuery ann modann dataFields False
-  let optAssert = Constraints.optQuery modann dataFields
-
-  let trueQuery = smtHeader ++
-                  Constraints.intRangeSMT ++
-                  secretType ++
-                  querySMT ++
-                  absSecretType ++
-                  betweeenQuery ++
-                  boundsAssert ++
-                  solverAssertTrue ++
-                  optAssert ++
-                  smtFooter
-  let falseQuery = smtHeader ++
-                   Constraints.intRangeSMT ++
-                   secretType ++
-                   querySMT ++
-                   absSecretType ++
-                   betweeenQuery ++
-                   boundsAssert ++
-                   solverAssertFalse ++
-                   optAssert ++
-                   smtFooter
-
-  -- liftIO $ putStrLn $ trueQuery
-  -- liftIO $ putStrLn $ falseQuery
-
-  trueModel <- liftIO $ checkSATWithZ3 (smtFileName "foo") $ trueQuery
-  falseModel <- liftIO $ checkSATWithZ3 (smtFileName "foo") $ falseQuery
-  return (modelToList trueModel, modelToList falseModel)
 
 pass :: ModGuts -> CoreM ModGuts
 pass modguts  = do 
@@ -91,7 +48,9 @@ pass modguts  = do
     let dataFields = head (second (head bounds))
     let modanns = second (head approxes)
     z3solns <- liftIO $ sequence (map (smtModels tycons hsBinds ann bounds dataFields) modanns)
-    let liquidThms = sepBy "\n" (map (liquidTheorem dataFields) (zip modanns z3solns))
+    let transformDataF = modelToRange dataFields
+    let ranges = map (\x -> (transformDataF (first x), transformDataF (second x))) z3solns
+    let liquidThms = sepBy "\n" (map (liquidTheorem dataFields) (zip modanns ranges))
     let liquidHead = liquidHeader name
     
     -- liftIO $ putStrLn $ liquidThms
@@ -109,41 +68,10 @@ pass modguts  = do
     
     bindsOnlyPass (mapM return) modguts
 
-modelToList :: Either (ParseErrorBundle String Void) (Z3SATResult, [(String, Integer)]) -> [(String, Integer)]
-modelToList model = case model of
-    Left e -> error (errorBundlePretty e)
-    Right (_trueSat, funs) -> funs
+modelToRange :: [(String, (Int, Int))] -> [(String, Integer)] -> Range
+modelToRange dataFields model = Range (map (\x -> let label = (first x) in
+  IntRange (findNum (label ++ "min") model) (findNum (label ++ "max") model)) dataFields)
 
-
-findNum :: (Foldable t, Eq a) => a -> t (a, c) -> c
-findNum label = (\(Just t)->snd t) . find (\x -> (fst x == label))
-
-printSmtModel :: IO (Either String (Z3SATResult, [(String, Integer)])) -> IO ()
-printSmtModel result = do
-  inner <- result
-  case inner of
-    Left e -> liftIO $ putStrLn $ "Error: " ++ e
-    Right (satResult, funs) -> do
-      for_ funs $ \(name, value) ->
-        liftIO $ putStrLn $ printf "%s = %d" name value
-      liftIO $ putStrLn $ printf "result=%s" (show satResult)
-
-smtFileName :: String -> String 
-smtFileName name = "./out/" ++ map toLower name ++ ".smt2"
 
 liquidFileName :: String -> String 
 liquidFileName name = "./" ++ name ++ "Gen.hs"
-
-smtHeader :: String
-smtHeader = [i|
-(set-option :opt.priority pareto)
-(set-option :produce-models true)
-(set-option :timeout 10000)
-|]
-
-smtFooter :: String
-smtFooter = [i|
-(check-sat)
-(get-model)
-(exit)
-|]

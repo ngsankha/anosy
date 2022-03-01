@@ -3,9 +3,9 @@
 module LiquidGenerator where
 
 import Data.String.Interpolate (i)
-import Data.List (find)
 import Language.SMT.ToSMT (toSMT, sepBy)
-import Utils (first)
+import Utils (first, findNum)
+import Domains.PowerSet (Range(..), toHs, lower, upper)
 
 secretDefn :: String -> String -> [(String, (Int, Int))] -> String
 secretDefn mod secretType dataFields = [i|
@@ -56,15 +56,15 @@ underapprox response prior = case response of
   False -> prior `intersect` (second underapproxInd)
 |]
 
-underapproxInd :: String -> [(String, (Int, Int))] -> [(String, Integer)] -> [(String, Integer)] -> String
-underapproxInd func dataFields modelTrue modelFalse = [i|
+underapproxInd :: String -> Range -> Range -> String
+underapproxInd func modelTrue modelFalse = [i|
 {-@
 underapproxInd :: (Range<{l:Secret |      #{func} l }, {\\_ -> True}>,
                    Range<{l:Secret | not (#{func} l)}, {\\_ -> True}>)
 @-}
 underapproxInd :: (Range, Range)
-underapproxInd = (Range [#{rangeCon dataFields modelTrue}] propTruePos propEmpty,
-                  Range [#{rangeCon dataFields modelFalse}] propFalsePos propEmpty)
+underapproxInd = (Range [#{toHs modelTrue}] propTruePos propEmpty,
+                  Range [#{toHs modelFalse}] propFalsePos propEmpty)
 |]
 
 overapprox :: String -> String
@@ -79,22 +79,22 @@ overapprox response prior = case response of
   False -> refine prior `intersect` (second overapproxInd)
 |]
 
-overapproxInd :: String -> [(String, (Int, Int))] -> [(String, Integer)] -> [(String, Integer)] -> String
-overapproxInd func dataFields modelTrue modelFalse = [i|
+overapproxInd :: String -> Range -> Range -> String
+overapproxInd func modelTrue modelFalse = [i|
 {-@
 overapproxInd :: (Range<{\\_ -> True}, {l:Secret | (not (#{func} l)) }>,
                   Range<{\\_ -> True}, {l:Secret |       #{func} l   }>)
 @-}
 overapproxInd :: (Range, Range)
-overapproxInd = (Range [#{rangeCon dataFields modelTrue}] propEmpty propCompleteTruePos,
+overapproxInd = (Range [#{toHs modelTrue}] propEmpty propCompleteTruePos,
                  RangeFull propEmpty)
 |]
 
-rangeCon :: [(String, (Int, Int))] -> [(String, Integer)] -> String
-rangeCon dataFields model = sepBy ", " (map (\x -> let label = (first x) in
-  [i|(IntRange #{findNum (label ++ "min") model} #{findNum (label ++ "max") model})|]) dataFields)
+-- rangeCon :: Range -> String
+-- rangeCon dataFields model = sepBy ", " (map (\x -> let label = (first x) in
+--   [i|(IntRange #{findNum (label ++ "min") model} #{findNum (label ++ "max") model})|]) dataFields)
 
-propTruePos :: [(String, (Int, Int))] -> [(String, Integer)] -> String
+propTruePos :: [(String, (Int, Int))] -> Range -> String
 propTruePos dataFields model = [i|
 {-@ propTruePos :: li:{Secret | #{boundsExpr dataFields model}}
                -> {l:Secret <{v:Secret | True <=> query v}> | l = li} @-}
@@ -102,7 +102,7 @@ propTruePos :: Secret -> Secret
 propTruePos li = li
 |]
 
-propCompleteTruePos :: [(String, (Int, Int))] -> [(String, Integer)] -> String
+propCompleteTruePos :: [(String, (Int, Int))] -> Range -> String
 propCompleteTruePos dataFields model = [i|
 {-@ assume propCompleteTruePos :: li:{Secret | #{negBoundsExpr dataFields model}}
                -> {l:Secret <{v:Secret | False <=> query v}> | l = li} @-}
@@ -110,13 +110,13 @@ propCompleteTruePos :: Secret -> Secret
 propCompleteTruePos li = li
 |]
 
-boundsExpr :: [(String, (Int, Int))] -> [(String, Integer)] -> String
-boundsExpr dataFields model = sepBy " && " (map (\x -> let label = (first x) in
-  [i|#{findNum (label ++ "min") model} <= #{label} li && #{label} li <= #{findNum (label ++ "max") model}|]) dataFields)
+boundsExpr :: [(String, (Int, Int))] -> Range -> String
+boundsExpr dataFields (Range b) = sepBy " && " (map (\(x, y) -> let label = (first x) in
+  [i|#{lower y} <= #{label} li && #{label} li <= #{upper y}|]) (zip dataFields b))
 
-negBoundsExpr :: [(String, (Int, Int))] -> [(String, Integer)] -> String
-negBoundsExpr dataFields model = sepBy " || " (map (\x -> let label = (first x) in
-  [i|#{label} li < #{findNum (label ++ "min") model} || #{findNum (label ++ "max") model} < #{label} li|]) dataFields)
+negBoundsExpr :: [(String, (Int, Int))] -> Range -> String
+negBoundsExpr dataFields (Range b) = sepBy " || " (map (\(x, y) -> let label = (first x) in
+  [i|#{label} li < #{lower y} || #{upper y} < #{label} li|]) (zip dataFields b))
 
 propEmpty :: String
 propEmpty = [i|
@@ -125,7 +125,7 @@ propEmpty :: Secret -> Secret
 propEmpty li = li
 |]
 
-propFalsePos :: [(String, (Int, Int))] -> [(String, Integer)] -> String
+propFalsePos :: [(String, (Int, Int))] -> Range -> String
 propFalsePos dataFields model = [i|
 {-@ propFalsePos :: li:{Secret | #{boundsExpr dataFields model}}
                   -> {l:Secret<{v:Secret | False <=> query v}> | l = li }  @-}
@@ -133,21 +133,16 @@ propFalsePos :: Secret -> Secret
 propFalsePos li = li
 |]
 
-findNum :: (Foldable t, Eq a) => a -> t (a, c) -> c
-findNum label y = case (find (\x -> (fst x == label)) y) of
-  Just t -> snd t
-  Nothing -> error "model not found"
-
-liquidTheorem :: [(String, (Int, Int))] -> ((String, String, Int), ([(String, Integer)], [(String, Integer)])) -> String
+liquidTheorem :: [(String, (Int, Int))] -> ((String, String, Int), (Range, Range)) -> String
 liquidTheorem dataFields (("underapprox", func, 1), (trueModel, falseModel)) = [i|
 #{underapprox func}
-#{underapproxInd func dataFields trueModel falseModel}
+#{underapproxInd func trueModel falseModel}
 #{propTruePos dataFields trueModel}
 #{propFalsePos dataFields falseModel}
 |]
 liquidTheorem dataFields (("overapprox",  func, 1), (trueModel, falseModel)) = [i|
 #{overapprox func}
-#{overapproxInd func dataFields trueModel falseModel}
+#{overapproxInd func trueModel falseModel}
 #{propCompleteTruePos dataFields trueModel}
 |]
 liquidTheorem _ _ = error "unexpected input"

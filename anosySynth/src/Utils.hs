@@ -2,6 +2,7 @@ module Utils where
 
 import Annotations (Annotation, AnnTarget(..), ann_target)
 import Language.Ghc.Misc ()
+import Data.List (find)
 
 first :: (a, b) -> a
 first (x, _) = x
@@ -21,3 +22,8 @@ modAnnot ann = case (ann_target ann) of
 
 dataAnnot :: Annotation -> Bool
 dataAnnot ann = not (modAnnot ann)
+
+findNum :: (Foldable t, Eq a) => a -> t (a, c) -> c
+findNum label y = case (find (\x -> (fst x == label)) y) of
+  Just t -> snd t
+  Nothing -> error "model not found"

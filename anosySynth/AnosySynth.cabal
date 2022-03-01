@@ -17,6 +17,7 @@ library
                        Text.SExpression.Default
                        Text.SExpression.Internal
                        Text.SExpression.Types
+                       Solver
                        Z3Interface
                        LiquidGenerator
                        Utils
