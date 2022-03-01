@@ -3,7 +3,7 @@
 
 module AnosySynth (plugin) where
 
-import Data.String.Interpolate ( i )
+import Data.String.Interpolate (i)
 import GhcPlugins
 import Language.Ghc.Misc ()
 import Language.SMT.ToSMT (toSMT, sepBy)
@@ -13,7 +13,7 @@ import Data.Word (Word8)
 import Text.Printf
 import Data.Foldable (for_)
 import Z3Interface
-import qualified Domains.Range as Range
+import qualified Language.SMT.Constraints as Constraints
 import LiquidGenerator (liquidTheorem, liquidHeader, secretDefn)
 import Text.Megaparsec (errorBundlePretty, ParseErrorBundle)
 import Data.Void (Void)
@@ -32,15 +32,15 @@ smtModels :: [TyCon] -> CoreProgram -> Annotation -> [(Unique, [[(String, (Int, 
 smtModels tycons hsBinds ann bounds dataFields modann = do
   let secretType = toSMT tycons
   let querySMT = toSMT hsBinds
-  let absSecretType = Range.absSMT ann (head bounds)
-  let betweeenQuery = Range.betweeenSMT ann (head bounds)
-  let boundsAssert = Range.searchBounds dataFields
-  let solverAssertTrue = Range.solverQuery ann modann dataFields True
-  let solverAssertFalse = Range.solverQuery ann modann dataFields False
-  let optAssert = Range.optQuery modann dataFields
+  let absSecretType = Constraints.absSMT ann (head bounds)
+  let betweeenQuery = Constraints.betweeenSMT ann (head bounds)
+  let boundsAssert = Constraints.searchBounds dataFields
+  let solverAssertTrue = Constraints.solverQuery ann modann dataFields True
+  let solverAssertFalse = Constraints.solverQuery ann modann dataFields False
+  let optAssert = Constraints.optQuery modann dataFields
 
   let trueQuery = smtHeader ++
-                  Range.intRangeSMT ++
+                  Constraints.intRangeSMT ++
                   secretType ++
                   querySMT ++
                   absSecretType ++
@@ -50,7 +50,7 @@ smtModels tycons hsBinds ann bounds dataFields modann = do
                   optAssert ++
                   smtFooter
   let falseQuery = smtHeader ++
-                   Range.intRangeSMT ++
+                   Constraints.intRangeSMT ++
                    secretType ++
                    querySMT ++
                    absSecretType ++
@@ -114,17 +114,6 @@ modelToList model = case model of
     Left e -> error (errorBundlePretty e)
     Right (_trueSat, funs) -> funs
 
-
--- genLiquid :: String -> [(String, Integer)] -> [(String, Integer)] -> String
--- genLiquid name trueFuns falseFuns = hsGenSrc name
---                                         (findNum "xmin" trueFuns)
---                                         (findNum "xmax" trueFuns)
---                                         (findNum "ymin" trueFuns)
---                                         (findNum "ymax" trueFuns)
---                                         (findNum "xmin" falseFuns)
---                                         (findNum "xmax" falseFuns)
---                                         (findNum "ymin" falseFuns)
---                                         (findNum "ymax" falseFuns)
 
 findNum :: (Foldable t, Eq a) => a -> t (a, c) -> c
 findNum label = (\(Just t)->snd t) . find (\x -> (fst x == label))

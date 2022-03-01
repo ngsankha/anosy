@@ -11,7 +11,8 @@ library
   exposed-modules:     AnosySynth
                        Language.Ghc.Misc
                        Language.SMT.ToSMT
-                       Domains.Range
+                       Language.SMT.Constraints
+                       Domains.PowerSet
                        Text.SExpression
                        Text.SExpression.Default
                        Text.SExpression.Internal

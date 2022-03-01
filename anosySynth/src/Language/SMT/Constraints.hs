@@ -1,6 +1,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 
-module Domains.Range where
+module Language.SMT.Constraints where
 
 import Data.String.Interpolate (i)
 import Annotations (Annotation)
