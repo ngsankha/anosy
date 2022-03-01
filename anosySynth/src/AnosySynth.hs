@@ -28,7 +28,7 @@ install :: [CommandLineOption] -> [CoreToDo] -> CoreM [CoreToDo]
 install _ todo =
   return (CoreDoPluginPass "anosySynth" pass : todo)
 
-smtModels :: [TyCon] -> CoreProgram -> Annotation -> [(Unique, [[(String, (Int, Int))]])] -> [(String, (Int, Int))] -> (String, String) -> IO ([(String, Integer)], [(String, Integer)])
+smtModels :: [TyCon] -> CoreProgram -> Annotation -> [(Unique, [[(String, (Int, Int))]])] -> [(String, (Int, Int))] -> (String, String, Int) -> IO ([(String, Integer)], [(String, Integer)])
 smtModels tycons hsBinds ann bounds dataFields modann = do
   let secretType = toSMT tycons
   let querySMT = toSMT hsBinds
@@ -86,7 +86,7 @@ pass modguts  = do
     -- -- Write translation query
     -- liftIO $ putStrLn $ show annots
     let bounds = nonDetUFMToList $ deserializeAnns (deserializeWithData :: [Word8] -> [(String, (Int, Int))]) $ mkAnnEnv (filter dataAnnot annots)
-    let approxes = nonDetUFMToList $ deserializeAnns (deserializeWithData :: [Word8] -> (String, String)) $ mkAnnEnv (filter modAnnot annots)
+    let approxes = nonDetUFMToList $ deserializeAnns (deserializeWithData :: [Word8] -> (String, String, Int)) $ mkAnnEnv (filter modAnnot annots)
     let ann = head (filter dataAnnot annots)
     let dataFields = head (second (head bounds))
     let modanns = second (head approxes)

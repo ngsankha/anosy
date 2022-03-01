@@ -138,14 +138,14 @@ findNum label y = case (find (\x -> (fst x == label)) y) of
   Just t -> snd t
   Nothing -> error "model not found"
 
-liquidTheorem :: [(String, (Int, Int))] -> ((String, String), ([(String, Integer)], [(String, Integer)])) -> String
-liquidTheorem dataFields (("underapprox", func), (trueModel, falseModel)) = [i|
+liquidTheorem :: [(String, (Int, Int))] -> ((String, String, Int), ([(String, Integer)], [(String, Integer)])) -> String
+liquidTheorem dataFields (("underapprox", func, 1), (trueModel, falseModel)) = [i|
 #{underapprox func}
 #{underapproxInd func dataFields trueModel falseModel}
 #{propTruePos dataFields trueModel}
 #{propFalsePos dataFields falseModel}
 |]
-liquidTheorem dataFields (("overapprox", func), (trueModel, falseModel)) = [i|
+liquidTheorem dataFields (("overapprox",  func, 1), (trueModel, falseModel)) = [i|
 #{overapprox func}
 #{overapproxInd func dataFields trueModel falseModel}
 #{propCompleteTruePos dataFields trueModel}

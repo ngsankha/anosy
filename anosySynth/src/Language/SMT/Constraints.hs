@@ -62,26 +62,26 @@ forallBounds bounds = sepBy " " (map (\x -> let label = (first x) in
   let bound = (second x) in
     [i|(<= #{label} #{second bound}) (<= #{first bound} #{label})|]) bounds)
 
-solverQuery :: Annotation -> (String, String) -> [(String, (Int, Int))] -> Bool -> String
-solverQuery ann ("underapprox", func) dataFields True = [i|
+solverQuery :: Annotation -> (String, String, Int) -> [(String, (Int, Int))] -> Bool -> String
+solverQuery ann ("underapprox", func, 1) dataFields True = [i|
 (assert
   (forall (#{forallParams dataFields})
     (=> (between #{secretConstructor (annName ann) dataFields} #{absConstructor (annName ann) dataFields})
       (#{func} #{secretConstructor (annName ann) dataFields}))))
 |]
-solverQuery ann ("underapprox", func) dataFields False = [i|
+solverQuery ann ("underapprox", func, 1) dataFields False = [i|
 (assert
   (forall (#{forallParams dataFields})
     (=> (between #{secretConstructor (annName ann) dataFields} #{absConstructor (annName ann) dataFields})
       (not (#{func} #{secretConstructor (annName ann) dataFields})))))
 |]
-solverQuery ann ("overapprox", func) dataFields True = [i|
+solverQuery ann ("overapprox", func, 1) dataFields True = [i|
 (assert
   (forall (#{forallParams dataFields})
     (=> (and (#{func} #{secretConstructor (annName ann) dataFields}) #{forallBounds dataFields})
       (between #{secretConstructor (annName ann) dataFields} #{absConstructor (annName ann) dataFields}))))
 |]
-solverQuery ann ("overapprox", func) dataFields False = [i|
+solverQuery ann ("overapprox", func, 1) dataFields False = [i|
 (assert
   (forall (#{forallParams dataFields})
     (=> (and (not (#{func} #{secretConstructor (annName ann) dataFields})) #{forallBounds dataFields})
@@ -98,9 +98,9 @@ rangeConstructor field = [i|(IntRange #{field}min #{field}max)|]
 forallParams :: [(String, (Int, Int))] -> String
 forallParams dataFields = sepBy " " (map (\x -> [i|(#{first x} Int)|]) dataFields)
 
-optQuery :: (String, String) -> [(String, (Int, Int))] -> String
-optQuery ("underapprox"   , _) dataFields = sepBy "\n" (map (\x -> [i|(maximize (- #{x}max #{x}min))|]) (map first dataFields))
-optQuery ("overapprox", _) dataFields = sepBy "\n" (map (\x -> [i|(minimize (- #{x}max #{x}min))|]) (map first dataFields))
+optQuery :: (String, String, Int) -> [(String, (Int, Int))] -> String
+optQuery ("underapprox", _, 1) dataFields = sepBy "\n" (map (\x -> [i|(maximize (- #{x}max #{x}min))|]) (map first dataFields))
+optQuery ("overapprox",  _, 1) dataFields = sepBy "\n" (map (\x -> [i|(minimize (- #{x}max #{x}min))|]) (map first dataFields))
 optQuery _ _ = error "unexpected optimization directive"
 
 secretConstructor :: String -> [(String, (Int, Int))] -> String
