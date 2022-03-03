@@ -117,3 +117,14 @@ refine lr = lr
 {-@ propEmpty :: li:Secret -> {lr:Secret | li = lr } @-}
 propEmpty :: Secret -> Secret 
 propEmpty li = li
+
+{-@ reflect sizePowerset @-}
+sizePowerset :: PowerSet -> Int
+sizePowerset (PowerSet pos neg _ _) = (sizeRange pos) - (sizeRange neg)
+sizePowerset (PowerSetEmpty _)  = 0
+sizePowerset (PowerSetFull _) = -1
+
+{-@ reflect sizeRange @-}
+sizeRange :: [Range] -> Int
+sizeRange [] = 0
+sizeRange (hd:tl) = (size hd) + (sizeRange tl)
