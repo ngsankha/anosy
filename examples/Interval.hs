@@ -118,7 +118,7 @@ validIntRanges (x:xs) = validIntRange x && validIntRanges xs
 
 {-@ reflect sizeLst @-}
 sizeLst :: [IntRange] -> Int
-sizeLst [] = 0
+sizeLst [] = 1
 sizeLst (hd:tl) = (sizeInterval hd) * (sizeLst tl)
 
 {-@ sizeIntervalProof :: r1 : IntRange 
