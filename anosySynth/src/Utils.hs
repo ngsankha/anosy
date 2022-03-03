@@ -23,7 +23,7 @@ modAnnot ann = case (ann_target ann) of
 dataAnnot :: Annotation -> Bool
 dataAnnot ann = not (modAnnot ann)
 
-findNum :: (Foldable t, Eq a) => a -> t (a, c) -> c
+findNum :: (Foldable t, Eq a) => a -> t (a, c) -> Either String c
 findNum label y = case (find (\x -> (fst x == label)) y) of
-  Just t -> snd t
-  Nothing -> error "model not found"
+  Just t -> Right (snd t)
+  Nothing -> Left "model not found"

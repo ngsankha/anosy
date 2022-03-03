@@ -16,54 +16,60 @@ import Data.List (find)
 import Data.Foldable (for_)
 import Text.Printf (printf)
 import Data.Char (toLower)
+import Utils (first, findNum)
+import Domains.PowerSet (PowerSet(..), Range(..), IntRange(..))
 
-smtModels :: [TyCon] -> CoreProgram -> Annotation -> [(Unique, [[(String, (Int, Int))]])] -> [(String, (Int, Int))] -> (String, String, Int) -> IO ([(String, Integer)], [(String, Integer)])
-smtModels tycons hsBinds ann bounds dataFields modann = do
+querySMTEncode :: [TyCon] -> CoreProgram -> String
+querySMTEncode tycons hsBinds = secretType ++ querySMT
+  where
+    secretType = toSMT tycons
+    querySMT = toSMT hsBinds
+
+smtModels :: [TyCon]
+          -> CoreProgram
+          -> Annotation
+          -> [(Unique, [[(String, (Int, Int))]])]
+          -> [(String, (Int, Int))]
+          -> (String, String, Int)
+          -> PowerSet
+          -> Bool
+          -> IO (Either String Range)
+smtModels tycons hsBinds ann bounds dataFields modann pset response = do
   let secretType = toSMT tycons
   let querySMT = toSMT hsBinds
   let absSecretType = Constraints.absSMT ann (head bounds)
-  let betweeenQuery = Constraints.betweeenSMT ann (head bounds)
+  let betweeenQuery = Constraints.betweeenSMT ann (head bounds) pset
   let boundsAssert = Constraints.searchBounds dataFields
-  let solverAssertTrue = Constraints.solverQuery ann modann dataFields True
-  let solverAssertFalse = Constraints.solverQuery ann modann dataFields False
+  let solverAssert = Constraints.solverQuery ann modann dataFields (head bounds) pset response
   let optAssert = Constraints.optQuery modann dataFields
 
-  let trueQuery = smtHeader ++
+  let query = smtHeader ++
                   Constraints.intRangeSMT ++
                   secretType ++
                   querySMT ++
                   absSecretType ++
                   betweeenQuery ++
                   boundsAssert ++
-                  solverAssertTrue ++
+                  solverAssert ++
                   optAssert ++
                   smtFooter
-  let falseQuery = smtHeader ++
-                   Constraints.intRangeSMT ++
-                   secretType ++
-                   querySMT ++
-                   absSecretType ++
-                   betweeenQuery ++
-                   boundsAssert ++
-                   solverAssertFalse ++
-                   optAssert ++
-                   smtFooter
 
-  -- liftIO $ putStrLn $ trueQuery
-  -- liftIO $ putStrLn $ falseQuery
+  -- liftIO $ putStrLn $ query
 
-  trueModel <- liftIO $ checkSATWithZ3 (smtFileName "foo") $ trueQuery
-  falseModel <- liftIO $ checkSATWithZ3 (smtFileName "foo") $ falseQuery
-  return (modelToList trueModel, modelToList falseModel)
+  model <- liftIO $ checkSATWithZ3 (smtFileName "foo") $ query
+  -- falseModel <- liftIO $ checkSATWithZ3 (smtFileName "foo") $ falseQuery
+  return (modelToList dataFields model)
 
-modelToList :: Either (ParseErrorBundle String Void) (Z3SATResult, [(String, Integer)]) -> [(String, Integer)]
-modelToList model = case model of
-    Left e -> error (errorBundlePretty e)
-    Right (_trueSat, funs) -> funs
+modelToList :: [(String, (Int, Int))] -> Either (ParseErrorBundle String Void) (Z3SATResult, [(String, Integer)]) -> Either String Range
+modelToList dataFields model = case model of
+    Left e -> Left (errorBundlePretty e)
+    Right (_trueSat, funs) -> case (modelToRange dataFields funs) of
+      Left e -> Left e
+      Right r -> Right r
 
 
-findNum :: (Foldable t, Eq a) => a -> t (a, c) -> c
-findNum label = (\(Just t)->snd t) . find (\x -> (fst x == label))
+-- findNum :: (Foldable t, Eq a) => a -> t (a, c) -> c
+-- findNum label = (\(Just t)->snd t) . find (\x -> (fst x == label))
 
 printSmtModel :: IO (Either String (Z3SATResult, [(String, Integer)])) -> IO ()
 printSmtModel result = do
@@ -91,3 +97,21 @@ smtFooter = [i|
 (get-model)
 (exit)
 |]
+
+modelToIntRange :: [(String, (Int, Int))] -> [(String, Integer)] -> Either String [IntRange]
+modelToIntRange [] model = Right []
+modelToIntRange (hd:tl) model =
+  let lower = (findNum (label ++ "min") model) in
+  let upper = (findNum (label ++ "max") model) in
+  case (lower, upper) of
+    (Right l, Right u) -> case (modelToIntRange tl model) of
+      Left e -> Left e
+      Right rs -> Right ([(IntRange l u)] ++ rs)
+    (_, _ ) -> Left "model not found"
+  where
+    label = first hd
+
+modelToRange :: [(String, (Int, Int))] -> [(String, Integer)] -> Either String Range
+modelToRange dataFields model = case (modelToIntRange dataFields model) of
+  Left e -> Left e
+  Right rs -> Right (Range rs)
