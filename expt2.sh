@@ -2,7 +2,7 @@
 
 set -e
 
-TIMES=2
+TIMES=20
 
 echo "{}" > expt2.json
 python3 e2e.py --times $TIMES --k 1
