@@ -31,5 +31,4 @@ query secret = let mainCountry = (country secret == 1) || (country secret == 3) 
   where
     age = 2010 - (birthYear secret)
 
-{-# ANN module ("underapprox", "query") #-}
-{-# ANN module ("overapprox", "query") #-}
+{-# ANN module ("underapprox", "query", 1 :: Int) #-}

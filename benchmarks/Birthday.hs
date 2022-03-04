@@ -23,5 +23,4 @@ query secret = ((bday secret) >= cday) && ((cday + 7) > (bday secret))
   where
     cday = 260
 
-{-# ANN module ("underapprox", "query") #-}
-{-# ANN module ("overapprox", "query") #-}
+{-# ANN module ("underapprox", "query", 1 :: Int) #-}
