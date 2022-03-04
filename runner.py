@@ -29,7 +29,7 @@ BENCHMARKS_PATH = 'examples/'
 GHC_PKG_ENV = 'anosy'
 
 parser = argparse.ArgumentParser(description='Run Anosy benchmarks')
-parser.add_argument('--times', '-t', dest='times', action='store',
+parser.add_argument('--times', '-t', dest='times', action='store', type=int,
                     default=11, help='number of times to run the benchmark')
 parser.add_argument('--smallbench', dest='smallbench', action='store_true', default=False,
                     help='use the small benchmark suite for data collection')
