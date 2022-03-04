@@ -88,7 +88,7 @@ instance ToSMT CoreBind where
 
 resType :: Type -> Type 
 resType (ForAllTy _ t) = resType t 
-resType (FunTy _ _ t)    = resType t 
+resType (FunTy _ t)    = resType t 
 resType t              = t 
 
 grabArgs :: CoreExpr -> ([Id], CoreExpr)
