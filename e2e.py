@@ -194,6 +194,7 @@ with open('expt2.json', 'r') as f:
   data = json.load(f)
 
 for j in range(args.times):
+  print("Running instance {}/{} with k={}".format(j + 1, args.times, k))
   random.seed(42 * j + 1)
   prior = {'pos': [[0, 400, 0, 400]], 'neg': []}
   over_prior = prior
