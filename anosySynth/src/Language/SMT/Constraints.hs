@@ -46,7 +46,7 @@ betweenAxis bound = [i|(betweenInt (#{axis} p) (#{axis}R r))|]
 psetPosContains :: [(String, (Int, Int))] -> PowerSet -> String
 psetPosContains bounds (PowerSet [] _) = ""
 psetPosContains bounds (PowerSet pos []) = [i|
-(and #{sepBy " " (map (betweenRangeConc bounds) pos)})
+(or #{sepBy " " (map (betweenRangeConc bounds) pos)})
 |]
 psetPosContains bounds (PowerSet pos neg) = [i|
 (and #{sepBy " " (map (betweenRangeConc bounds) pos)}
