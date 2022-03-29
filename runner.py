@@ -7,6 +7,7 @@ import fileinput
 import numpy as np
 from scipy.stats import iqr
 import csv
+import sys
 
 BENCHMARKS = [
   'Birthday',
@@ -81,10 +82,16 @@ def collect(args, approx, k, output_csv):
 
     for i in range(times):
       success = False
-      while not success:
+      tries = 0
+      while (not success) and (tries < 5):
+        tries += 1
+        if tries > 1:
+          print("Retrying for previous failure ...")
         start_time = time.time()
         success = ghc['-package-env', GHC_PKG_ENV, '-fplugin=AnosySynth', bench + '.hs'] & TF(FG=True)
         end_time = time.time()
+      if not success:
+        sys.exit("Retried 5 times, giving up! Please run the script again or report the error!")
       synth_times.append(end_time - start_time)
 
       rm['-rf', '.liquid'] & FG
