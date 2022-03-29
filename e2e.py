@@ -1,10 +1,11 @@
 import argparse
 import traceback
-from z3 import ForAll, Int, Ints, If, And, Or, Optimize, Not, Implies, set_param, unsat, simplify
+from z3 import ForAll, Int, Ints, If, And, Or, Optimize, Not, Implies, set_param, unsat, simplify, Z3_toggle_warning_messages
 import random
 import json
 
 set_param('opt.priority', 'pareto')
+Z3_toggle_warning_messages(False)
 
 def absolute(x):
   return If(x > 0, x, -x)
@@ -228,7 +229,7 @@ for j in range(args.times):
         pset_true = intersect(under_prior, underapprox(under_prior, True, k))
         pset_false = intersect(under_prior, underapprox(under_prior, False, k))
       except Exception as e:
-        print('========= Error ==========')
+        print('========= Policy violation ==========')
         skip_under = True
 
       if not policy(pset_true, pset_false):
@@ -246,7 +247,7 @@ for j in range(args.times):
         pset_true = intersect(over_prior, overapprox(over_prior))
         pset_false = over_prior
       except:
-        print('========= Error ==========')
+        print('========= Policy violation ==========')
         skip_over = False
 
       if not policy(pset_true, pset_false):
