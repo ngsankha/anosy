@@ -69,8 +69,8 @@ def collect(args, approx, k, output_csv):
   else:
     curr_benchmarks = BENCHMARKS
     times = args.times
-  
-  csv_file = [['Benchmark', 'Size True', 'Size False', 'Verif. Time Median', 'Synth. Time Median', 'Verif. Time SIQR', 'Synth. Time SIQR']]
+
+  csv_file = [['Benchmark', 'Size True', 'Size False', 'Verif. Time Median', 'Verif. Time SIQR', 'Synth. Time Median', 'Synth. Time SIQR']]
 
   for bench in curr_benchmarks:
     synth_times = []
@@ -80,18 +80,20 @@ def collect(args, approx, k, output_csv):
     local.cwd.chdir(BENCHMARKS_PATH)
 
     for i in range(times):
-      start_time = time.time()
-      ghc['-package-env', GHC_PKG_ENV, '-fplugin=AnosySynth', bench + '.hs'] & TF(FG=True)
-      end_time = time.time()
+      success = False
+      while not success:
+        start_time = time.time()
+        success = ghc['-package-env', GHC_PKG_ENV, '-fplugin=AnosySynth', bench + '.hs'] & TF(FG=True)
+        end_time = time.time()
       synth_times.append(end_time - start_time)
-      
-      rm['-rf', '.liquid']
-      
+
+      rm['-rf', '.liquid'] & FG
+
       start_time = time.time()
       liquid[bench + 'Gen.hs'] & TF(FG=True)
       end_time = time.time()
       verif_times.append(end_time - start_time)
-      
+
       writeMain(bench, approx)
       ghc['Main.hs'] & TF(FG=True)
       out = local["./Main"]()
