@@ -2,6 +2,10 @@
 
 module Birthday where
 
+-- The query and the secret
+-- The ANN for DateOfBirth provides the bounds for synthesis
+-- The ANN for module directs what kind of approximation to synthesize
+
 {-@
 data DateOfBirth = DateOfBirth {
   bday :: Int,

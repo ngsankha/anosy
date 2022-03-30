@@ -15,8 +15,8 @@ import Data.Hashable
 import Prelude hiding (lookup)
 import SecretDefn (Secret)
 
--- The State of Anosy is the abstract domain, 
--- defined as data in case we want to expans it 
+-- The Anosy state contains the policy, the map of secrets to be protected,
+-- the initial prior knowledge and a map of queries
 data AnosyST dom secret = AnosyST {
     policy   :: (dom, dom) -> (Bool, Bool),
     secrets  :: HashMap secret dom,
@@ -36,7 +36,7 @@ type AnosyT dom secret m = StateT (AnosyST dom secret) m
 class Unprotectable p where 
   unprotect :: p a -> a 
 
-
+-- The bounded downgrade operation as shown in Fig 2 of the paper
 downgrade :: (Monad m, Eq secret, Hashable secret, Unprotectable p)
               => Check
               -> p secret 
