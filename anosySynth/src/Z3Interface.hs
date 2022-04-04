@@ -51,19 +51,6 @@ checkSATWithZ3 ctx input = do
     Left e -> pure $ Left e
     Right (Z3Output satResult f) -> pure $ Right (satResult, intFuns f)
 
-runPyMod :: IO String
-runPyMod = do
-  output <- withCreateProcess (proc "python3" ["synth.py"])
-            { std_in = CreatePipe
-            , std_out = CreatePipe
-            , std_err = Inherit
-            } $ \(Just hIn) (Just hOut) _ _ -> do
-    hSetBuffering hIn NoBuffering
-    s <- hGetContents hOut
-    void $ evaluate (length s)
-    pure s
-  return output
-
 intFuns :: SExpr -> [(String, Integer)]
 -- intFuns (List (Atom "model" : fs) = mapMaybe p fs
 intFuns (List fs) = catMaybes $ map p fs

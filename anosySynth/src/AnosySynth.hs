@@ -14,7 +14,6 @@ import LiquidGenerator (liquidTheorem, liquidHeader, secretDefn)
 import Utils (first, second, annName, dataAnnot, modAnnot, findNum)
 import Solver (smtModels, querySMTEncode)
 import Domains.PowerSet (IntRange(..), Range(..))
-import Z3Interface (runPyMod)
 import Domains.PowerSet (PowerSet(..), mkEmptyPowerSet)
 import Text.Megaparsec (errorBundlePretty, ParseErrorBundle)
 import Data.Void (Void)
@@ -35,50 +34,28 @@ pass modguts  = do
     let tycons   = mg_tcs modguts
     let annots   = mg_anns modguts
 
-    -- -- Print initial Haskell Binds 
-    -- liftIO $ putStrLn $ "\n--- Haskell Binds: ---\n" 
-    -- liftIO $ putStrLn $ show hsBinds 
-    -- -- Print Tycons translation
-    -- liftIO $ putStrLn $ "\n--- Haskell TyCons: ---\n"
-    -- liftIO $ putStrLn $ show tycons  
-    -- -- Write translation into the .smt file 
-    -- liftIO $ putStrLn $ toSMT tycons
-    -- liftIO $ putStrLn $ toSMT hsBinds 
-    -- -- Write translation query
-    -- liftIO $ putStrLn $ show annots
     let bounds = nonDetUFMToList $ deserializeAnns (deserializeWithData :: [Word8] -> [(String, (Int, Int))]) $ mkAnnEnv (filter dataAnnot annots)
     let approxes = nonDetUFMToList $ deserializeAnns (deserializeWithData :: [Word8] -> (String, String, Int)) $ mkAnnEnv (filter modAnnot annots)
     let ann = head (filter dataAnnot annots)
     let dataFields = head (second (head bounds))
     let modanns = second (head approxes)
     let parAppSMTModels = smtModels tycons hsBinds ann bounds dataFields
-    -- z3solns <- liftIO $ sequence (map parAppSMTModels modanns)
 
     psets <- liftIO $ sequence (map (tmpFn parAppSMTModels dataFields) modanns)
+
+    -- The following commented lines help with debugging. Uncomment them to log the intermediate values.
     -- psetTrue <- liftIO $ buildPSet mkEmptyPowerSet (head modanns) parAppSMTModels dataFields True
     -- psetFalse <- liftIO $ buildPSet mkEmptyPowerSet (head modanns) parAppSMTModels dataFields False
-
     -- liftIO $ putStrLn $ show $ psetFalse
     -- let ranges = map (\x -> (transformDataF (first x), transformDataF (second x))) z3solns
     -- let psets = [(psetTrue, psetFalse)]
+
     let liquidThms = sepBy "\n" (map (liquidTheorem dataFields) (zip modanns psets))
     let liquidHead = liquidHeader name
 
-    -- liftIO $ putStrLn $ liquidThms
-    -- liftIO $ writeFile "input.json" $ unpack $ encode $ (PyInput (querySMTEncode tycons hsBinds) dataFields modanns)
-    -- liftIO $ runPyMod >>= putStrLn
-    
-    -- trueModel <- liftIO $ checkSATWithZ3 (smtFileName name) $ trueQuery
-    -- falseModel <- liftIO $ checkSATWithZ3 (smtFileName name) $ falseQuery
-
-    -- liftIO $ writeFile (smtFileName name) trueQuery
-    -- liftIO $ printSmtModel (checkSATWithZ3 (smtFileName name) $ falseQuery)
-    -- liftIO $ writeFile (liquidFileName name) (liquidText name trueModel falseModel)
-    -- liftIO $ putStrLn $ (liquidHeader name (annName ann) dataFields)
-
     liftIO $ writeFile (liquidFileName name) (liquidHead ++ liquidThms)
     liftIO $ writeFile ("./SecretDefn.hs") (secretDefn name (annName ann) dataFields)
-    
+
     bindsOnlyPass (mapM return) modguts
 
 tmpFn :: ((String, String, Int) -> PowerSet -> Bool -> IO (Either String Range))
