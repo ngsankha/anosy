@@ -52,7 +52,6 @@ betweenSecretRec :: [Int] -> [IntRange] -> Bool
 betweenSecretRec (i:rest) (r:restbounds) = (betweenInt i r) && (betweenSecretRec rest restbounds)
 betweenSecretRec [] _ = True
 betweenSecretRec _ [] = True
-betweenSecretRec [] [] = True
 
 {-@ reflect betweenInt @-}
 betweenInt :: Int -> IntRange -> Bool
@@ -168,7 +167,6 @@ subsetRangeRec :: [IntRange] -> [IntRange] -> Bool
 subsetRangeRec (hd1:tl1) (hd2:tl2) = (subsetInt hd1 hd2) && (subsetRangeRec tl1 tl2)
 subsetRangeRec [] _ = True
 subsetRangeRec _ [] = True
-subsetRangeRec [] [] = True
 
 -- {-@ intersectLaw :: i: Secret
 --              -> r1: Range
