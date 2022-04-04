@@ -30,7 +30,7 @@ parseZ3SATResult = do
     "sat" -> pure Satisfied
     "unknown" -> pure Unknown
     "unsat" -> pure Unsatisfied
-    _ -> error "Unreachable"
+    _ -> pure Unknown
 
 parseZ3Output :: Parser Z3Output
 parseZ3Output = Z3Output <$> parseZ3SATResult <*> parseSExpr def

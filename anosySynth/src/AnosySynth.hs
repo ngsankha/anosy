@@ -17,6 +17,7 @@ import Domains.PowerSet (IntRange(..), Range(..))
 import Domains.PowerSet (PowerSet(..), mkEmptyPowerSet)
 import Text.Megaparsec (errorBundlePretty, ParseErrorBundle)
 import Data.Void (Void)
+import System.Exit (die)
 
 plugin :: Plugin
 plugin = defaultPlugin {
@@ -75,7 +76,7 @@ buildPSet :: PowerSet
 buildPSet pset@(PowerSet pos neg) action@("underapprox", func, 1) parApp dataFields response = do
   z3soln <- parApp action pset response
   case z3soln of
-    Left e -> error e
+    Left e -> die e
     Right range -> return (PowerSet (pos ++ [range]) neg)
 buildPSet pset action@(approx@"underapprox", func, k) parApp dataFields response = do
   psetSub <- buildPSet pset (approx, func, k - 1) parApp dataFields response
@@ -88,7 +89,7 @@ buildPSet pset action@(approx@"underapprox", func, k) parApp dataFields response
 buildPSet pset@(PowerSet pos neg) action@("overapprox", func, 1) parApp dataFields response = do
   z3soln <- parApp action pset response
   case z3soln of
-    Left e -> error e
+    Left e -> die e
     Right range -> return (PowerSet (pos ++ [range]) neg)
 buildPSet pset action@(approx@"overapprox", func, k) parApp dataFields response = do
   psetSub <- buildPSet pset (approx, func, k - 1) parApp dataFields response

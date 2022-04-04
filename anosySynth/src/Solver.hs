@@ -62,7 +62,9 @@ smtModels tycons hsBinds ann bounds dataFields modann pset response = do
 
 modelToList :: [(String, (Int, Int))] -> Either (ParseErrorBundle String Void) (Z3SATResult, [(String, Integer)]) -> Either String Range
 modelToList dataFields model = case model of
-    Left e -> Left (errorBundlePretty e)
+    -- the above line gives the real errors that give information you can debug
+    -- Left e -> Left (errorBundlePretty e)
+    Left e -> Left "The solver failed! Please check your query or try again."
     Right (_trueSat, funs) -> case (modelToRange dataFields funs) of
       Left e -> Left e
       Right r -> Right r
