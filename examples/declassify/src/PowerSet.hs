@@ -40,12 +40,12 @@ inPowerSet :: Secret -> [Range] -> Bool
 inPowerSet s (hd:tl) = (betweenSecret s hd) || (inPowerSet s tl)
 inPowerSet s [] = False
 
-{-@ reflect subsetPowerSet @-}
-subsetPowerSet :: PowerSet -> PowerSet -> Bool
-subsetPowerSet (PowerSet poslist1 neglist1 _ _) (PowerSet poslist2 neglist2 _ _) = subsetList poslist1 neglist1 poslist2 neglist2
-subsetPowerSet (PowerSetEmpty _) _ = True
-subsetPowerSet _ (PowerSetFull _) = True
-subsetPowerSet _ _ = False
+{-@ reflect subset @-}
+subset :: PowerSet -> PowerSet -> Bool
+subset (PowerSet poslist1 neglist1 _ _) (PowerSet poslist2 neglist2 _ _) = subsetList poslist1 neglist1 poslist2 neglist2
+subset (PowerSetEmpty _) _ = True
+subset _ (PowerSetFull _) = True
+subset _ _ = False
 
 {-@ reflect subsetList @-}
 subsetList :: [Range] -> [Range] -> [Range] -> [Range] -> Bool

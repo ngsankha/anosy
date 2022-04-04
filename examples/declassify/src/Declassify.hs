@@ -17,7 +17,8 @@ import Data.HashMap.Strict (fromList)
 import SecretDefn
 import Birthday
 import BirthdayGen (underapprox, overapprox)
-import PowerSet
+import PowerSet hiding (subset)
+import qualified PowerSet (subset)
 import Interval (Range(..), IntRange(..))
 
 -- The quantitative policy used to secure the data
@@ -29,7 +30,7 @@ mypolicy (trueDom, falseDom) = (sizePowerset trueDom  > 100,
 
 instance AbsDom PowerSet where 
   contains elem dom = secretInPowerset elem dom
-  subset dom1 dom2 = subsetPowerSet dom1 dom2
+  subset dom1 dom2 = PowerSet.subset dom1 dom2
   intersect dom1 dom2 = intersectPowerSet dom1 dom2
 
 -- The initial prior knowledge
