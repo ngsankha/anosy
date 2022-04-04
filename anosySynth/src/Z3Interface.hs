@@ -40,7 +40,7 @@ checkSATWithZ3 ctx input = do
   output <- withCreateProcess (proc "z3" ["-in"])
             { std_in = CreatePipe
             , std_out = CreatePipe
-            , std_err = Inherit
+            , std_err = CreatePipe
             } $ \(Just hIn) (Just hOut) _ _ -> do
     hSetBuffering hIn NoBuffering
     hPutStrLn hIn input
