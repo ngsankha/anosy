@@ -230,11 +230,11 @@ for j in range(args.times):
         pset_true = intersect(under_prior, underapprox(under_prior, True, k))
         pset_false = intersect(under_prior, underapprox(under_prior, False, k))
       except Exception as e:
-        print('========= Policy violation ==========')
+        print('========= Declassification policy violation detected. Terminating query sequence ==========')
         skip_under = True
 
       if not policy(pset_true, pset_false):
-        print('========= Policy violation ==========')
+        print('========= Declassification policy violation detected. Terminating query sequence ==========')
         skip_under = True
       else:
         if str(simplify(nearby(secret[0], secret[1]))) == 'True':
@@ -248,11 +248,11 @@ for j in range(args.times):
         pset_true = intersect(over_prior, overapprox(over_prior))
         pset_false = over_prior
       except:
-        print('========= Policy violation ==========')
+        print('========= Declassification policy violation detected. Terminating query sequence ==========')
         skip_over = False
 
       if not policy(pset_true, pset_false):
-        print('========= Policy violation ==========')
+        print('========= Declassification policy violation detected. Terminating query sequence ==========')
         skip_over = True
       else:
         if str(simplify(nearby(secret[0], secret[1]))) == 'True':
@@ -280,13 +280,13 @@ for j in range(args.times):
     #   if policy(pset_true):
     #     under_prior = pset_true
     #   else:
-    #     print('========= Policy violation ==========')
+    #     print('========= Declassification policy violation detected. Terminating query sequence ==========')
     #     break
     # else:
     #   if policy(pset_false):
     #     under_prior = pset_false
     #   else:
-    #     print('========= Policy violation ==========')
+    #     print('========= Declassification policy violation detected. Terminating query sequence ==========')
     #     break
 
     
