@@ -3,7 +3,9 @@
 This is the artifact for our PLDI 2022 submission, _[Anosy: Approximated Knowledge Synthesis with Refinement Types for Declassification](https://sankhs.com/static/anosy-pldi22.pdf)_.
 
 ---
+
 This artifact Docker **does not work** on a M1 Mac machine. You might need to separately install individual components together.
+
 ---
 
 ## Getting Started
@@ -198,7 +200,7 @@ This should build and run the code, which will produce the result of the query u
 
 The above section serves as a template to modify and write your own applications using Anosy. The `query` is written in a file as such as `Birthday.hs`. The additional annotation following the secret type (`DateOfBirth` in this example) is given to specify the bounds for the fields in the secret data type.
 
-```
+```haskell
 {-# ANN DateOfBirth ([
   ("bday", (0, 364)),
   ("year", (1956, 1992))
@@ -209,7 +211,7 @@ The above example says the `bday` field has values ranging from 0 to 364 and the
 
 The following annotation starting with `{-# ANN module` serves as a directive to the AnosySynth tool to synthesize the indistinguishibility sets and the functions to compute posteriors.
 
-```
+```haskell
 {-# ANN module ("underapprox", "query", 1 :: Int) #-}
 ```
 
