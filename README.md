@@ -2,9 +2,9 @@
 
 This is the artifact for our PLDI 2022 submission, _[Anosy: Approximated Knowledge Synthesis with Refinement Types for Declassification](https://sankhs.com/static/anosy-pldi22.pdf)_.
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
 This artifact Docker **does not work** on a M1 Mac machine. You might need to separately install individual components together.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
 
 ## Getting Started
 
@@ -18,7 +18,7 @@ bash setup_docker.sh
 
 **Note:** Open Docker Desktop, and go to Preferences > Resources > Advanced and then increase the memory to 6 GB. We have found builds crash when memory is set to 2 GB.
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
 Ensure you have the latest version of Docker Desktop (4.5.0 at the time of writing). Sometimes running Docker requires `sudo`. If the above command fails, trying running it again with `sudo`.
 
 If you face errors like below, ensure that you have the Docker Desktop app (or the Docker daemon) running in the background:
@@ -26,7 +26,7 @@ If you face errors like below, ensure that you have the Docker Desktop app (or t
 ```
 Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
 ```
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
 
 Once inside the Docker container's shell, you should be in the `/root/anosy` directory (assumed to be the working directory from now on). Run the following command to build and install LiquidHaskell:
 
@@ -47,7 +47,7 @@ You could peek around and do some evaluation, after you are done, just `exit` or
 docker start -ia anosy-artifact
 ```
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
 **Starting over:** In case the Docker container is broken and you want to destroy your Docker container and start over again run the following command, and then follow instructions from the previous section.
 
 ```
@@ -55,7 +55,7 @@ docker rm anosy-artifact
 docker rmi anosy-artifact-img
 ```
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
 
 ## Basic Testing: Kick the tires phase
 
