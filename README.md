@@ -1,6 +1,6 @@
-# Anosy: Approximated Knowledge Synthesis with Refinement Types for Declassification
+# ANOSY: Approximated Knowledge Synthesis with Refinement Types for Declassification
 
-This is the artifact for our PLDI 2022 submission, _[Anosy: Approximated Knowledge Synthesis with Refinement Types for Declassification](https://sankhs.com/static/anosy-pldi22.pdf)_.
+This is the artifact for our PLDI 2022 paper, _[ANOSY: Approximated Knowledge Synthesis with Refinement Types for Declassification](https://sankhs.com/static/anosy-pldi22.pdf)_.
 
 ---
 
